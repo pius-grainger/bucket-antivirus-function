@@ -26,7 +26,7 @@ from common import AV_TIMESTAMP_METADATA
 
 
 # Get all objects in an S3 bucket that have not been previously scanned
-def get_objects(s3_client, s3_bucket_name):
+def get_objects(lambda_client, lambda_function_name,s3_client, s3_bucket_name):
 
     s3_object_list = []
 
@@ -43,7 +43,9 @@ def get_objects(s3_client, s3_bucket_name):
             key_name = key["Key"]
             # Don't include objects that have been scanned
             if not object_previously_scanned(s3_client, s3_bucket_name, key_name):
+                print("adding: {}".format(key_name))
                 s3_object_list.append(key_name)
+                scan_object(lambda_client, lambda_function_name, s3_bucket_name, key_name)
 
     return s3_object_list
 
@@ -103,11 +105,11 @@ def main(lambda_function_name, s3_bucket_name, limit):
         sys.exit(1)
 
     # Scan the objects in the bucket
-    s3_object_list = get_objects(s3_client, s3_bucket_name)
-    if limit:
-        s3_object_list = s3_object_list[: min(limit, len(s3_object_list))]
-    for key_name in s3_object_list:
-        scan_object(lambda_client, lambda_function_name, s3_bucket_name, key_name)
+    s3_object_list = get_objects(lambda_client, lambda_function_name, s3_client, s3_bucket_name)
+    #if limit:
+    #    s3_object_list = s3_object_list[: min(limit, len(s3_object_list))]
+    #for key_name in s3_object_list:
+    #    scan_object(lambda_client, lambda_function_name, s3_bucket_name, key_name)
 
 
 if __name__ == "__main__":
